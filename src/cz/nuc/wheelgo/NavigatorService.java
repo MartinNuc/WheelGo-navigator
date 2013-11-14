@@ -1,9 +1,13 @@
 package cz.nuc.wheelgo;
 
 import java.io.StringReader;
+import java.lang.reflect.Type;
 import java.util.List;
 
+import javax.ws.rs.Consumes;
+import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
@@ -26,13 +30,14 @@ import com.google.appengine.api.taskqueue.TaskOptions.Method;
 @Path("/api/")
 public class NavigatorService {
 
-	@GET
-	@Produces({ MediaType.APPLICATION_JSON })
+	@POST
+	@Produces({ MediaType.APPLICATION_JSON})
+	@Consumes({ MediaType.APPLICATION_JSON})
 	@Path("/navigate")
 	public String navigate(@QueryParam("latFrom") String latFrom,
 			@QueryParam("longFrom") String longFrom,
 			@QueryParam("latTo") String latTo,
-			@QueryParam("longTo") String longTo) throws JAXBException {
+			@QueryParam("longTo") String longTo, String avoid) throws JAXBException {
 
 		Double latFromDouble;
 		Double longFromDouble;
@@ -44,40 +49,47 @@ public class NavigatorService {
 			latToDouble = Double.parseDouble(latTo);
 			longToDouble = Double.parseDouble(longTo);
 			createBackendTask(latFromDouble, longFromDouble, latToDouble,
-					longToDouble);
+					longToDouble, avoid);
 		} catch (Exception e) {
 			e.printStackTrace();
 			return "";
 		}
 
-		return "id="
-				+ NavigationTask.generateCode(latFromDouble, longFromDouble,
+		return "" + NavigationTask.generateCode(latFromDouble, longFromDouble,
 						latToDouble, longToDouble);
 	}
 
 	@GET
 	@Produces({ MediaType.APPLICATION_JSON })
 	@Path("/getResult")
-	public List<Spot> getPath(@QueryParam("id") String id)
+	public String getPath(@QueryParam("id") String id)
 			throws EntityNotFoundException, JAXBException {
 		Key k = KeyFactory.createKey("path", Long.valueOf(id));
-		Entity result = Util.getDatastoreServiceInstance().get(k);
+		Entity result;
+		try {
+			result = Util.getDatastoreServiceInstance().get(k);
+		}
+		catch (Exception e)
+		{
+			return "";
+		}
 		String marshalled = ((Text) result.getProperty("path")).getValue();
 
-		JAXBContext context = JAXBContext.newInstance(JaxbList.class);
+		/*JAXBContext context = JAXBContext.newInstance(JaxbList.class);
 		Unmarshaller um = context.createUnmarshaller();
-		JaxbList<Spot> response = (JaxbList<Spot>) um.unmarshal(new StreamSource(new StringReader(marshalled)));
-		return response.list;
+		JaxbList<NavigationNode> response = (JaxbList<NavigationNode>) um.unmarshal(new StreamSource(new StringReader(marshalled)));*/
+		return marshalled;
 	}
 
 	private void createBackendTask(Double latFrom, Double longFrom,
-			Double latTo, Double longTo) {
+			Double latTo, Double longTo, String locationsToAvoid) {
 		Queue queue = QueueFactory.getDefaultQueue();
 		TaskOptions taskOptions = TaskOptions.Builder.withUrl("/findPath")
 				.param("latFrom", latFrom.toString())
 				.param("longFrom", longFrom.toString())
 				.param("latTo", latTo.toString())
-				.param("longTo", longTo.toString()).method(Method.POST);
+				.param("longTo", longTo.toString())
+				.param("gsonAvoid", locationsToAvoid).method(Method.POST);
 		queue.add(taskOptions);
 	}
 }

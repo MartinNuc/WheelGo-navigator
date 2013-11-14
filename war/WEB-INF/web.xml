@@ -33,6 +33,10 @@
 			<param-name>com.sun.jersey.config.property.packages</param-name>
 			<param-value>cz.nuc.wheelgo</param-value>
 		</init-param>
+		<init-param>
+		  <param-name>javax.ws.rs.Application</param-name>
+		  <param-value>cz.nuc.wheelgo.MyApplication</param-value>
+		</init-param>
 		<load-on-startup>1</load-on-startup>
 	</servlet>
 	<servlet-mapping>

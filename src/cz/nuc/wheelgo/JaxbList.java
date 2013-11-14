@@ -7,7 +7,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlSeeAlso;
 
 @XmlRootElement(name = "root", namespace="")
-@XmlSeeAlso({Spot.class})
+@XmlSeeAlso({NavigationNode.class})
 public class JaxbList<T> {
 
 	@XmlElement(name = "list")

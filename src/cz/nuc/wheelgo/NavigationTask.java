@@ -24,8 +24,8 @@ import cz.nuc.wheelgo.dijkstra.Vertex;
 
 public class NavigationTask {
 
-	public static List<Spot> navigate(Double latFrom, Double longFrom,
-			Double latTo, Double longTo) {
+	public static List<NavigationNode> navigate(Double latFrom, Double longFrom,
+			Double latTo, Double longTo, List<Location> locationsToAvoid) {
 		URI baseUri = UriBuilder
 				.fromUri("http://api.openstreetmap.org/api/0.6").build();
 
@@ -79,11 +79,11 @@ public class NavigationTask {
 		Holder<List<Vertex>> verticesHolder = new Holder<List<Vertex>>();
 		Holder<List<Edge>> edgesHolder = new Holder<List<Edge>>();
 		try {
-			XMLOsmParser.parseMap(output, verticesHolder, edgesHolder);
+			XMLOsmParser.parseMap(output, locationsToAvoid, verticesHolder, edgesHolder);
 		} catch (XPathExpressionException | SAXException | IOException
 				| ParserConfigurationException e) {
 			e.printStackTrace();
-			return new LinkedList<Spot>();
+			return new LinkedList<NavigationNode>();
 		}
 		edges = edgesHolder.value;
 		vertices = verticesHolder.value;
@@ -114,18 +114,18 @@ public class NavigationTask {
 
 		if (sourceInOsm == null || destinationInOsm == null
 				|| sourceInOsm.equals(destinationInOsm))
-			return new LinkedList<Spot>();
+			return new LinkedList<NavigationNode>();
 
 		Graph g = new Graph(vertices, edges);
 		DijkstraAlgorithm dijkstra = new DijkstraAlgorithm(g);
 		dijkstra.execute(sourceInOsm); // from
 		LinkedList<Vertex> path = dijkstra.getPath(destinationInOsm); // to
 
-		List<Spot> ret = new LinkedList<Spot>();
+		List<NavigationNode> ret = new LinkedList<NavigationNode>();
 		if (path != null) {
 			for (Vertex vertex : path) {
 				// System.out.println(vertex.getLatitude()+","+vertex.getLongitude());
-				ret.add(new Spot(vertex));
+				ret.add(new NavigationNode(vertex));
 			}
 		}
 
