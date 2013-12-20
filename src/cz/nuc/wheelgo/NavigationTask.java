@@ -63,14 +63,32 @@ public class NavigationTask {
 			float distance = (float) distToSegment(source, v.getSource(), v.getDestination());
 			if (minSource > distance) {
 				minSource = distance;
-				sourceInOsm = v.getSource();
+				Double a = dist2(source, v.getSource());
+				Double b = dist2(source, v.getDestination());
+				if (a < b)
+				{
+					sourceInOsm = v.getSource();
+				}
+				else
+				{
+					sourceInOsm = v.getDestination();
+				}
 				// System.out.println(v + " -- distance=" + distance + "-- " +
 				// source);
 			}
 			distance = (float) distToSegment(destination, v.getSource(), v.getDestination());
 			if (minDestination > distance) {
 				minDestination = distance;
-				destinationInOsm = v.getDestination();
+				Double a = dist2(source, v.getSource());
+				Double b = dist2(source, v.getDestination());
+				if (a < b)
+				{
+					destinationInOsm = v.getSource();
+				}
+				else
+				{
+					destinationInOsm = v.getDestination();
+				}
 				// System.out.println(v + " -- distance=" + distance + "-- " +
 				// destination);
 			}
@@ -97,7 +115,8 @@ public class NavigationTask {
 		List<NavigationNode> ret = new LinkedList<NavigationNode>();
 		if (path != null) {
 			for (Vertex vertex : path) {
-				// System.out.println(vertex.getLatitude()+","+vertex.getLongitude());
+				// print result for http://www.darrinward.com/lat-long/
+				System.out.println(vertex.getLatitude()+","+vertex.getLongitude());
 				ret.add(new NavigationNode(vertex));
 			}
 		}
@@ -245,7 +264,7 @@ public class NavigationTask {
 		}
 		
 		URI uri = UriBuilder
-				.fromUri("http://www.overpass-api.de/api/xapi?way[bbox=" + bboxParam + "]").build();
+				.fromUri("http://www.overpass-api.de/api/xapi?way[highway=*][bbox=" + bboxParam + "]").build();
 		WebResource service = client.resource(uri);
 				
 		return service.get(String.class);
