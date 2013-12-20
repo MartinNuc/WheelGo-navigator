@@ -84,7 +84,7 @@ public class XMLOsmParser {
 					if (oldVertex != null) {
 						float distance = Edge
 								.calculateWeight(vertex, oldVertex, node, params);
-						if (params.locationsToAvoid != null) {
+						if (params != null && params.locationsToAvoid != null) {
 							for (Location avoid : params.locationsToAvoid) {
 								Vertex temp = new Vertex("", "");
 								temp.setLatitude(avoid.latitude);

@@ -71,8 +71,17 @@ public class FindPathServlet extends HttpServlet {
 			*/
 
 			// use generated ID
-			int id = NavigationTask.generateCode(
-					latFromDouble, longFromDouble, latToDouble, longToDouble, params.locationsToAvoid);
+			int id;
+			if (params == null)
+			{
+				id = NavigationTask.generateCode(
+					latFromDouble, longFromDouble, latToDouble, longToDouble);
+			}
+			else
+			{
+				id = NavigationTask.generateCode(
+						latFromDouble, longFromDouble, latToDouble, longToDouble, params.locationsToAvoid);
+			}
 			Entity result = new Entity("path", id);
 
 			result.setProperty("path", gsonPath);

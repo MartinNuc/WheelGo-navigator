@@ -29,61 +29,14 @@ public class NavigationTask {
 	
 	public static List<NavigationNode> navigate(Double latFrom, Double longFrom,
 			Double latTo, Double longTo, NavigationParameters params) throws Exception {
-		URI baseUri = UriBuilder
-				.fromUri("http://api.openstreetmap.org/api/0.6").build();
-
-		ClientConfig config = new DefaultClientConfig();
-		Client client = Client.create(config);
-		client.setReadTimeout(300000);
-		client.setConnectTimeout(30000);
-		config.getProperties().put(ClientConfig.PROPERTY_READ_TIMEOUT,30000);//30 seconds read timeout
-		config.getProperties().put(ClientConfig.PROPERTY_CONNECT_TIMEOUT,30000);//30 seconds read timeout
-		WebResource service = client.resource(baseUri);
-		/**
-		 * GET /api/0.6/map?bbox=left,bottom,right,top
-		 * 
-		 * left is the longitude of the left (westernmost) side of the bounding
-		 * box. bottom is the latitude of the bottom (southernmost) side of the
-		 * bounding box. right is the longitude of the right (easternmost) side
-		 * of the bounding box. top is the latitude of the top (northernmost)
-		 * side of the bounding box.
-		 */
-		// construct bounding box parameter according to API description above
-		String bboxParam = "";
-		// left
-		if (longFrom < longTo) {
-			bboxParam += longFrom-offset;
-		} else {
-			bboxParam += longTo-offset;
-		}
-		bboxParam += ",";
-		// bottom
-		if (latFrom < latTo) {
-			bboxParam += latFrom-offset;
-		} else {
-			bboxParam += latTo-offset;
-		}
-		bboxParam += ",";
-		// right
-		if (longFrom > longTo) {
-			bboxParam += longFrom+offset;
-		} else {
-			bboxParam += longTo+offset;
-		}
-		bboxParam += ",";
-		// top
-		if (latFrom > latTo) {
-			bboxParam += latFrom+offset;
-		} else {
-			bboxParam += latTo+offset;
-		}
-
+		
 		Date start = new Date();
 		System.out.println("Connecting to OSM");
-		String output = service.path("map").queryParam("bbox", bboxParam)
-		// .accept(MediaType.APPLICATION_XML)
-				.get(String.class);
+		
+		String output = queryOverpassAPI(latFrom, longFrom, latTo, longTo);
+		//String output = queryClassicAPI(latFrom, longFrom, latTo, longTo);
 		Date end = new Date();
+		
 		System.out.println("Recieved response from OSM. It took: " + (int)(end.getTime() - start.getTime())/1000 + " s");
 		List<Vertex> vertices;
 		List<Edge> edges;
@@ -156,6 +109,11 @@ public class NavigationTask {
 			Double latTo, Double longTo, List<Location> locationsToAvoid) {
 		return (latFrom + "" + longFrom + latTo + longTo + locationsToAvoid.hashCode()).hashCode();
 	}
+	
+	public static int generateCode(Double latFrom, Double longFrom,
+			Double latTo, Double longTo) {
+		return (latFrom + "" + longFrom + latTo + longTo).hashCode();
+	}
 
 	private static double sqr(double x) {
 		return x * x;
@@ -188,6 +146,109 @@ public class NavigationTask {
 
 	public static double distToSegment(Vertex p, Vertex v, Vertex w) {
 		return Math.sqrt(distToSegmentSquared(p, v, w));
+	}
+	
+	/**
+	 * GET /api/0.6/map?bbox=left,bottom,right,top
+	 * 
+	 * left is the longitude of the left (westernmost) side of the bounding
+	 * box. bottom is the latitude of the bottom (southernmost) side of the
+	 * bounding box. right is the longitude of the right (easternmost) side
+	 * of the bounding box. top is the latitude of the top (northernmost)
+	 * side of the bounding box.
+	 */
+	public static String queryClassicAPI(Double latFrom, Double longFrom,
+			Double latTo, Double longTo)
+	{
+		ClientConfig config = new DefaultClientConfig();
+		Client client = Client.create(config);
+		client.setReadTimeout(300000);
+		client.setConnectTimeout(30000);
+		config.getProperties().put(ClientConfig.PROPERTY_READ_TIMEOUT,30000);//30 seconds read timeout
+		config.getProperties().put(ClientConfig.PROPERTY_CONNECT_TIMEOUT,30000);//30 seconds read timeout
+
+		URI uri = UriBuilder
+				.fromUri("http://api.openstreetmap.org/api/0.6").build();
+		WebResource service = client.resource(uri);
+		
+		String bboxParam = "";
+		// left
+		if (longFrom < longTo) {
+			bboxParam += longFrom-offset;
+		} else {
+			bboxParam += longTo-offset;
+		}
+		bboxParam += ",";
+		// bottom
+		if (latFrom < latTo) {
+			bboxParam += latFrom-offset;
+		} else {
+			bboxParam += latTo-offset;
+		}
+		bboxParam += ",";
+		// right
+		if (longFrom > longTo) {
+			bboxParam += longFrom+offset;
+		} else {
+			bboxParam += longTo+offset;
+		}
+		bboxParam += ",";
+		// top
+		if (latFrom > latTo) {
+			bboxParam += latFrom+offset;
+		} else {
+			bboxParam += latTo+offset;
+		}
+
+		return service.path("map").queryParam("bbox", bboxParam)
+				// .accept(MediaType.APPLICATION_XML)
+				.get(String.class);
+	}
+	
+	public static String queryOverpassAPI(Double latFrom, Double longFrom,
+			Double latTo, Double longTo)
+	{
+		ClientConfig config = new DefaultClientConfig();
+		Client client = Client.create(config);
+		client.setReadTimeout(300000);
+		client.setConnectTimeout(30000);
+		config.getProperties().put(ClientConfig.PROPERTY_READ_TIMEOUT,30000);//30 seconds read timeout
+		config.getProperties().put(ClientConfig.PROPERTY_CONNECT_TIMEOUT,30000);//30 seconds read timeout
+		
+		String bboxParam = "";
+		// left
+		if (longFrom < longTo) {
+			bboxParam += longFrom-offset;
+		} else {
+			bboxParam += longTo-offset;
+		}
+		bboxParam += ",";
+		// bottom
+		if (latFrom < latTo) {
+			bboxParam += latFrom-offset;
+		} else {
+			bboxParam += latTo-offset;
+		}
+		bboxParam += ",";
+		// right
+		if (longFrom > longTo) {
+			bboxParam += longFrom+offset;
+		} else {
+			bboxParam += longTo+offset;
+		}
+		bboxParam += ",";
+		// top
+		if (latFrom > latTo) {
+			bboxParam += latFrom+offset;
+		} else {
+			bboxParam += latTo+offset;
+		}
+		
+		URI uri = UriBuilder
+				.fromUri("http://www.overpass-api.de/api/xapi?way[bbox=" + bboxParam + "]").build();
+		WebResource service = client.resource(uri);
+				
+		return service.get(String.class);
 	}
 	
 }

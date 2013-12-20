@@ -66,8 +66,17 @@ public class NavigatorService {
 		locationsToAvoid = gson.fromJson(params, listType);
 		*/
 
-		return "" + NavigationTask.generateCode(latFromDouble, longFromDouble,
-						latToDouble, longToDouble, paramsObject.locationsToAvoid);
+		if (paramsObject == null)
+		{
+			return "" + NavigationTask.generateCode(latFromDouble, longFromDouble,
+							latToDouble, longToDouble);
+		}
+		else
+		{
+			return "" + NavigationTask.generateCode(latFromDouble, longFromDouble,
+					latToDouble, longToDouble, paramsObject.locationsToAvoid);
+		}
+
 	}
 
 	@GET
