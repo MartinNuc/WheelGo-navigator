@@ -38,26 +38,28 @@ public class FindPathServlet extends HttpServlet {
 			HttpServletResponse resp) throws IOException {
 		Gson gson = new Gson();
 		
+		Date start = new Date();
+		System.out.println("----- START");
+		
 		resp.setContentType("application/json; charset=utf-8");
 		resp.setHeader("Cache-Control", "no-cache");
 		Double latFromDouble;
 		Double longFromDouble;
 		Double latToDouble;
 		Double longToDouble;
-		List<Location> locationsToAvoid;
+		NavigationParameters params;
 		try {
 			latFromDouble = Double.parseDouble(req.getParameter("latFrom"));
 			longFromDouble = Double.parseDouble(req.getParameter("longFrom"));
 			latToDouble = Double.parseDouble(req.getParameter("latTo"));
 			longToDouble = Double.parseDouble(req.getParameter("longTo"));
 			
-			Type listType = new TypeToken<List<Location>>(){}.getType();
-			locationsToAvoid = gson.fromJson(req.getParameter("gsonAvoid"), listType);
+			params = gson.fromJson(req.getParameter("gsonParameters"), NavigationParameters.class);
 			List<NavigationNode> path = NavigationTask.navigate(latFromDouble,
-					longFromDouble, latToDouble, longToDouble, locationsToAvoid);
+					longFromDouble, latToDouble, longToDouble, params);
 
 			// marshal path for database
-			Text text = new Text(gson.toJson(path));
+			Text gsonPath = new Text(gson.toJson(path));
 			
 			/*JAXBContext jc = JAXBContext.newInstance(JaxbList.class);
 			Marshaller m = jc.createMarshaller();
@@ -69,12 +71,17 @@ public class FindPathServlet extends HttpServlet {
 			*/
 
 			// use generated ID
-			Entity result = new Entity("path", NavigationTask.generateCode(
-					latFromDouble, longFromDouble, latToDouble, longToDouble));
+			int id = NavigationTask.generateCode(
+					latFromDouble, longFromDouble, latToDouble, longToDouble, params.locationsToAvoid);
+			Entity result = new Entity("path", id);
 
-			result.setProperty("path", text);
+			result.setProperty("path", gsonPath);
 			result.setProperty("timestamp", new Date());
 			Util.persistEntity(result);
+			
+			Date end = new Date();
+			System.out.println("----- Finished path finding. It took: " + (int)(end.getTime() - start.getTime())/1000 + " s");
+			System.out.println("----- Saved with ID: " + id);
 		} catch (Exception e) {
 			e.printStackTrace();
 			resp.setStatus(200);

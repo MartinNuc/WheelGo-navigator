@@ -23,7 +23,7 @@ import cz.nuc.wheelgo.dijkstra.Vertex;
 
 public class XMLOsmParser {
 
-	public static void parseMap(String xml, List<Location> locationToAvoid,
+	public static void parseMap(String xml, NavigationParameters params,
 			Holder<List<Vertex>> retNodes, Holder<List<Edge>> retEdges)
 			throws XPathExpressionException, SAXException, IOException,
 			ParserConfigurationException {
@@ -83,13 +83,13 @@ public class XMLOsmParser {
 						vertex = vertices.get(id);
 					if (oldVertex != null) {
 						float distance = Edge
-								.calculateWeight(vertex, oldVertex);
-						if (locationToAvoid != null) {
-							for (Location avoid : locationToAvoid) {
+								.calculateWeight(vertex, oldVertex, node, params);
+						if (params.locationsToAvoid != null) {
+							for (Location avoid : params.locationsToAvoid) {
 								Vertex temp = new Vertex("", "");
 								temp.setLatitude(avoid.latitude);
 								temp.setLongitude(avoid.longitude);
-								if (distToSegment(temp, vertex, oldVertex) < 0.0001) {
+								if (NavigationTask.distToSegment(temp, vertex, oldVertex) < 0.0001) {
 									distance = Float.MAX_VALUE;
 								}
 							}
@@ -115,38 +115,5 @@ public class XMLOsmParser {
 		 */
 		retNodes.value = new ArrayList<Vertex>(vertices.values());
 		retEdges.value = edges;
-	}
-
-	private static double sqr(double x) {
-		return x * x;
-	}
-
-	private static double dist2(Vertex v, Vertex w) {
-		return sqr(v.getLatitude() - w.getLatitude())
-				+ sqr(v.getLongitude() - w.getLongitude());
-	}
-
-	private static double distToSegmentSquared(Vertex p, Vertex v, Vertex w) {
-		double l2 = dist2(v, w);
-		if (l2 == 0)
-			return dist2(p, v);
-		double t = ((p.getLatitude() - v.getLatitude())
-				* (w.getLatitude() - v.getLatitude()) + (p.getLongitude() - v
-				.getLongitude()) * (w.getLongitude() - v.getLongitude()))
-				/ l2;
-		if (t < 0)
-			return dist2(p, v);
-		if (t > 1)
-			return dist2(p, w);
-		Vertex temp = new Vertex("", "temp");
-		temp.setLatitude(v.getLatitude() + t
-				* (w.getLatitude() - v.getLatitude()));
-		temp.setLongitude(v.getLongitude() + t
-				* (w.getLongitude() - v.getLongitude()));
-		return dist2(p, temp);
-	}
-
-	private static double distToSegment(Vertex p, Vertex v, Vertex w) {
-		return Math.sqrt(distToSegmentSquared(p, v, w));
 	}
 }

@@ -12,6 +12,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
@@ -26,6 +27,8 @@ import com.google.appengine.api.taskqueue.Queue;
 import com.google.appengine.api.taskqueue.QueueFactory;
 import com.google.appengine.api.taskqueue.TaskOptions;
 import com.google.appengine.api.taskqueue.TaskOptions.Method;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 @Path("/api/")
 public class NavigatorService {
@@ -37,7 +40,7 @@ public class NavigatorService {
 	public String navigate(@QueryParam("latFrom") String latFrom,
 			@QueryParam("longFrom") String longFrom,
 			@QueryParam("latTo") String latTo,
-			@QueryParam("longTo") String longTo, String avoid) throws JAXBException {
+			@QueryParam("longTo") String longTo, String params) throws JAXBException {
 
 		Double latFromDouble;
 		Double longFromDouble;
@@ -49,47 +52,56 @@ public class NavigatorService {
 			latToDouble = Double.parseDouble(latTo);
 			longToDouble = Double.parseDouble(longTo);
 			createBackendTask(latFromDouble, longFromDouble, latToDouble,
-					longToDouble, avoid);
+					longToDouble, params);
 		} catch (Exception e) {
 			e.printStackTrace();
 			return "";
 		}
 
+		Gson gson = new Gson();
+		NavigationParameters paramsObject = gson.fromJson(params, NavigationParameters.class);
+		/*
+		List<Location> locationsToAvoid;  
+		Type listType = new TypeToken<List<Location>>(){}.getType();
+		locationsToAvoid = gson.fromJson(params, listType);
+		*/
+
 		return "" + NavigationTask.generateCode(latFromDouble, longFromDouble,
-						latToDouble, longToDouble);
+						latToDouble, longToDouble, paramsObject.locationsToAvoid);
 	}
 
 	@GET
 	@Produces({ MediaType.APPLICATION_JSON })
-	@Path("/getResult")
-	public String getPath(@QueryParam("id") String id)
-			throws EntityNotFoundException, JAXBException {
+	@Path("/result")
+	public Response getPath(@QueryParam("id") String id) 
+			throws Exception {
 		Key k = KeyFactory.createKey("path", Long.valueOf(id));
-		Entity result;
+		String marshalled = null;
 		try {
-			result = Util.getDatastoreServiceInstance().get(k);
+			Entity result = Util.getDatastoreServiceInstance().get(k);
+			marshalled = ((Text) result.getProperty("path")).getValue();
 		}
-		catch (Exception e)
+		catch(EntityNotFoundException e)
 		{
-			return "";
+			return Response.status(500).entity("Path is not ready yet").build();
 		}
-		String marshalled = ((Text) result.getProperty("path")).getValue();
 
 		/*JAXBContext context = JAXBContext.newInstance(JaxbList.class);
 		Unmarshaller um = context.createUnmarshaller();
 		JaxbList<NavigationNode> response = (JaxbList<NavigationNode>) um.unmarshal(new StreamSource(new StringReader(marshalled)));*/
-		return marshalled;
+
+		return Response.ok(marshalled).build();
 	}
 
 	private void createBackendTask(Double latFrom, Double longFrom,
-			Double latTo, Double longTo, String locationsToAvoid) {
+			Double latTo, Double longTo, String params) {
 		Queue queue = QueueFactory.getDefaultQueue();
 		TaskOptions taskOptions = TaskOptions.Builder.withUrl("/findPath")
 				.param("latFrom", latFrom.toString())
 				.param("longFrom", longFrom.toString())
 				.param("latTo", latTo.toString())
 				.param("longTo", longTo.toString())
-				.param("gsonAvoid", locationsToAvoid).method(Method.POST);
+				.param("gsonParameters", params).method(Method.POST);
 		queue.add(taskOptions);
 	}
 }
