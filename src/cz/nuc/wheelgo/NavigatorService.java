@@ -33,6 +33,13 @@ import com.google.gson.reflect.TypeToken;
 @Path("/api/")
 public class NavigatorService {
 
+    @GET
+    @Produces("application/json")
+    @Path("hello")
+    public String hello() {
+        return "It works!";
+    }
+	
 	@POST
 	@Produces({ MediaType.APPLICATION_JSON})
 	@Consumes({ MediaType.APPLICATION_JSON})

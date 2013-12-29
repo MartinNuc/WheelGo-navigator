@@ -52,7 +52,7 @@ public class XMLOsmParser {
 			Element node = (Element) ways.item(i);
 
 			// ignore ways without highway tag
-			boolean interesting = false;
+			/*boolean interesting = false;
 			NodeList tags = node.getElementsByTagName("tag");
 			for (int j = 0; j < tags.getLength(); j++) {
 				Element tag = (Element) tags.item(j);
@@ -63,7 +63,7 @@ public class XMLOsmParser {
 			}
 
 			if (interesting == false)
-				continue;
+				continue;*/
 
 			String edgeId = node.getAttribute("id");
 			Vertex oldVertex = null;
@@ -74,8 +74,6 @@ public class XMLOsmParser {
 				for (int j = 0; j < references.getLength(); j++) {
 					Element tag = (Element) references.item(j);
 					String id = tag.getAttribute("ref");
-					if (id.equals("386774143"))
-						System.out.print("");
 					if (vertices.containsKey(id) == false) {
 						vertex = allNodes.get(id);
 						vertices.put(id, vertex);

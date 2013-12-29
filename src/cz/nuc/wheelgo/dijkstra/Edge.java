@@ -65,7 +65,7 @@ public class Edge {
 			NodeList tags = edge.getElementsByTagName("tag");
 			for (int j = 0; j < tags.getLength(); j++) {
 				Element tag = (Element) tags.item(j);
-				if (tag.hasAttribute("incline")
+				if (tag.hasAttribute("k")
 						&& tag.getAttribute("k").equals("incline")) {
 					incline = calculateWeightIncline(Integer.parseInt(tag.getAttribute("value")), params.maxIncline);
 				}
@@ -78,11 +78,7 @@ public class Edge {
 	
 	private static float getManualInclineForTesting(String wayId)
 	{
-		if (wayId.equalsIgnoreCase("31001316"))
-		{
-			return 50;
-		}
-		return 0;
+		return 1;
 	}
 	
 	private static float calculateWeightIncline(int incline, int maxIncline)
